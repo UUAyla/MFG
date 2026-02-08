@@ -1,0 +1,26 @@
+{
+  "name": "游索 · 探索世界與自己的遊戲",
+  "short_name": "游索",
+  "description": "每天抽三張任務卡，鎖定主線、禁域與行動，在玩中探索自己與世界。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d0c12",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

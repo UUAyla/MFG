@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d0c12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="游索" />
+  <title>游索 · 探索世界與自己的遊戲</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0c12;
+      --bg-soft: #16141d;
+      --card: rgba(255, 255, 255, 0.06);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --ink: #f0eef4;
+      --muted: #8b8698;
+      --accent: #a78bfa;
+      --accent-dim: rgba(167, 139, 250, 0.25);
+      --glow: 0 0 24px rgba(167, 139, 250, 0.15);
+      --success: #34d399;
+      --success-dim: rgba(52, 211, 153, 0.2);
+      --zone: #f59e0b;
+      --zone-dim: rgba(245, 158, 11, 0.2);
+      --radius: 14px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Zen Kaku Gothic New", "Noto Serif TC", sans-serif;
+      background: var(--bg);
+      background-image: radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-dim), transparent),
+                        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(52, 211, 153, 0.08), transparent);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .container { max-width: 560px; margin: 0 auto; }
+
+    .brand { text-align: center; margin-bottom: 1.5rem; }
+    .game-title {
+      font-family: "Noto Serif TC", serif;
+      font-weight: 600;
+      font-size: 2rem;
+      letter-spacing: 0.2em;
+      color: var(--ink);
+      margin-bottom: 0.35rem;
+    }
+    .tagline { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em; }
+
+    .section-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ----- 任務卡牌（翻牌） ----- */
+    .quest-deck {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .game-card {
+      flex: 1 1 140px;
+      min-width: 0;
+      perspective: 800px;
+      cursor: pointer;
+    }
+    .game-card .card-inner {
+      position: relative;
+      width: 100%;
+      min-height: 120px;
+      transition: transform 0.5s ease;
+      transform-style: preserve-3d;
+    }
+    .game-card.flipped .card-inner { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+    }
+    .game-card.card-zone .card-face { border-color: rgba(245, 158, 11, 0.35); }
+    .game-card.card-zone .card-front .card-title { color: var(--zone); }
+    .card-back {
+      transform: rotateY(180deg);
+      justify-content: flex-start;
+      align-items: stretch;
+      text-align: left;
+    }
+    .card-back label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.35rem; }
+    .card-back input, .card-back textarea {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: var(--bg-soft);
+      color: var(--ink);
+    }
+    .card-back input:focus, .card-back textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .card-back textarea { min-height: 64px; resize: vertical; }
+    .card-num { font-size: 1.25rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .card-title { font-size: 0.95rem; font-weight: 600; color: var(--accent); }
+    .card-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.35rem; }
+    .card-front .card-preview {
+      font-size: 0.85rem;
+      color: var(--ink);
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--card-border);
+      max-height: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+      color: #fff;
+      width: 100%;
+      letter-spacing: 0.05em;
+    }
+    .btn-primary:hover { box-shadow: var(--glow); opacity: 0.95; }
+
+    /* ----- 今日簡報（已鎖定的三張卡） ----- */
+    .today-summary { margin-top: 1.5rem; }
+    .summary-deck {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .summary-card {
+      flex: 1 1 140px;
+      min-width: 0;
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      background: var(--card);
+      backdrop-filter: blur(12px);
+    }
+    .summary-card.zone { border-color: rgba(245, 158, 11, 0.35); }
+    .summary-card .card-title { font-size: 0.8rem; margin-bottom: 0.4rem; }
+    .summary-card .card-value { font-size: 0.95rem; color: var(--ink); }
+    .summary-card .card-value.empty { color: var(--muted); font-style: italic; }
+    .date-display { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+
+    /* ----- 挑戰卡（兩張可點擊翻牌結算） ----- */
+    .challenge-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+    .challenge-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .challenge-card {
+      flex: 1 1 160px;
+      min-width: 0;
+      perspective: 600px;
+      cursor: pointer;
+    }
+    .challenge-card .ch-inner {
+      position: relative;
+      min-height: 72px;
+      transition: transform 0.45s ease;
+      transform-style: preserve-3d;
+    }
+    .challenge-card.done .ch-inner { transform: rotateY(180deg); }
+    .challenge-card .ch-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--card-border);
+      padding: 0.9rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      font-size: 0.9rem;
+    }
+    .challenge-card .ch-back {
+      transform: rotateY(180deg);
+      border-color: rgba(52, 211, 153, 0.5);
+      background: var(--success-dim);
+      color: var(--success);
+      font-weight: 500;
+    }
+    .challenge-card.done .ch-front { border-color: rgba(255,255,255,0.12); }
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    .progress-bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-soft);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .progress-bar.half { width: 50%; }
+    .progress-bar.full { width: 100%; }
+    .progress-text { font-size: 0.85rem; color: var(--muted); min-width: 2.5rem; }
+    .progress-text.done { color: var(--success); }
+    .clear-badge {
+      margin-top: 0.75rem;
+      padding: 0.6rem;
+      background: var(--success-dim);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      color: var(--success);
+      text-align: center;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .clear-badge.show { opacity: 1; transform: scale(1); }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    /* ----- 歷史記錄 ----- */
+    .history-section {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--card-border);
+    }
+    .history-toggle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .history-toggle:hover { color: var(--accent); }
+    .history-list {
+      display: grid;
+      gap: 0.75rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .history-list.show { max-height: 2000px; }
+    .history-item {
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--card-border);
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      font-size: 0.85rem;
+    }
+    .history-item .date { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.35rem; }
+    .history-item .content { color: var(--ink); line-height: 1.5; }
+    .history-item .stats {
+      margin-top: 0.5rem;
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+    }
+    .history-item .stat { color: var(--muted); }
+    .history-item .stat.done { color: var(--success); }
+
+    /* ----- 2026 裝備區 ----- */
+    .equipment-section {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      background: linear-gradient(180deg, rgba(167, 139, 250, 0.08) 0%, transparent 100%);
+      backdrop-filter: blur(12px);
+    }
+    .equipment-toggle {
+      font-size: 0.85rem;
+      color: var(--accent);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .equipment-toggle:hover { color: var(--ink); }
+    .equipment-toggle .arrow { transition: transform 0.2s; }
+    .equipment-section.open .equipment-toggle .arrow { transform: rotate(180deg); }
+    .equipment-grid {
+      display: grid;
+      gap: 0.75rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+    .equipment-section.open .equipment-grid { max-height: 600px; }
+    .equipment-card {
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--card-border);
+      background: var(--card);
+    }
+    .equipment-card.skill { border-left: 3px solid var(--accent); }
+    .equipment-card.talisman { border-left: 3px solid var(--zone); }
+    .equipment-card.trigger { border-left: 3px solid var(--success); }
+    .equipment-card label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .equipment-card input, .equipment-card textarea {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: var(--bg-soft);
+      color: var(--ink);
+    }
+    .equipment-card input:focus, .equipment-card textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .equipment-card textarea { min-height: 56px; resize: vertical; }
+    .equipment-card .card-name { font-size: 0.9rem; font-weight: 600; color: var(--ink); margin-bottom: 0.25rem; }
+
+    /* ----- 今日一句（趣味） ----- */
+    .daily-line {
+      text-align: center;
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 1rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--card-border);
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-style: italic;
+      animation: fadeIn 0.6s ease;
+    }
+    .streak {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .streak span { color: var(--zone); font-weight: 500; }
+    .daily-trigger {
+      margin-bottom: 1rem;
+      padding: 0.6rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      background: rgba(52, 211, 153, 0.08);
+      font-size: 0.85rem;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      animation: fadeIn 0.5s ease;
+    }
+    .daily-trigger .label { color: var(--muted); font-size: 0.75rem; }
+    .daily-trigger .word { color: var(--success); font-weight: 600; }
+    .daily-trigger .arrow-symbol { color: var(--muted); font-size: 0.75rem; }
+    .daily-trigger .action { color: var(--ink); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .game-card:hover { transform: translateY(-2px); transition: transform 0.2s ease; }
+    .clear-badge.show { animation: pop 0.4s ease; }
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      70% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    input[type="checkbox"] { position: absolute; opacity: 0; pointer-events: none; }
+
+    .install-btn {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--card-border);
+      background: var(--card);
+      color: var(--muted);
+      cursor: pointer;
+      z-index: 9;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s, color 0.2s;
+    }
+    .install-btn.show { opacity: 1; transform: translateY(0); }
+    .install-btn:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <button type="button" class="install-btn" id="installBtn" aria-label="安裝 App">安裝 App</button>
+  <div class="container">
+    <header class="brand">
+      <h1 class="game-title">游索</h1>
+      <p class="tagline">探索世界 · 探索自己 · 創造你的世界</p>
+    </header>
+
+    <p class="daily-line" id="dailyLine"></p>
+    <p class="streak" id="streakLine"></p>
+    <div class="daily-trigger" id="dailyTrigger" hidden>
+      <span class="label">今日觸發詞</span>
+      <span class="word" id="triggerWord"></span>
+      <span class="arrow-symbol">→</span>
+      <span class="action" id="triggerAction"></span>
+    </div>
+
+    <p class="section-label">抽三張任務卡 · 點擊翻牌填寫</p>
+    <section class="setup">
+      <div class="quest-deck">
+        <div class="game-card" data-quest="focus" id="cardFocus">
+          <div class="card-inner">
+            <div class="card-face card-front">
+              <span class="card-num">①</span>
+              <p class="card-title">主線焦點</p>
+              <span class="card-hint">點擊翻牌</span>
+            </div>
+            <div class="card-face card-back">
+              <label for="focus">今日人生的重點是什麼？</label>
+              <input type="text" id="focus" placeholder="一句話就好" />
+            </div>
+          </div>
+        </div>
+        <div class="game-card card-zone" data-quest="avoid" id="cardAvoid">
+          <div class="card-inner">
+            <div class="card-face card-front">
+              <span class="card-num">②</span>
+              <p class="card-title">今日禁域</p>
+              <span class="card-hint">點擊翻牌</span>
+            </div>
+            <div class="card-face card-back">
+              <label for="avoid">絕對不要踏入的區域（不要做什麼）</label>
+              <input type="text" id="avoid" placeholder="例如：不滑短影音、不爭辯" />
+            </div>
+          </div>
+        </div>
+        <div class="game-card" data-quest="action" id="cardAction">
+          <div class="card-inner">
+            <div class="card-face card-front">
+              <span class="card-num">③</span>
+              <p class="card-title">終極行動</p>
+              <span class="card-hint">點擊翻牌</span>
+            </div>
+            <div class="card-face card-back">
+              <label for="action">一件最小、可執行的行動</label>
+              <textarea id="action" placeholder="例如：寫完報告第一段" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" id="saveBtn">鎖定任務 · 開始今日</button>
+    </section>
+
+    <p class="section-label" id="summaryLabel" hidden>今日任務簡報</p>
+    <section class="today-summary" id="summarySection" hidden>
+      <p class="date-display" id="summaryDate"></p>
+      <div class="summary-deck">
+        <div class="summary-card" id="sumFocus">
+          <p class="card-title">主線焦點</p>
+          <p class="card-value" id="dispFocus"></p>
+        </div>
+        <div class="summary-card zone" id="sumAvoid">
+          <p class="card-title">今日禁域</p>
+          <p class="card-value" id="dispAvoid"></p>
+        </div>
+        <div class="summary-card" id="sumAction">
+          <p class="card-title">終極行動</p>
+          <p class="card-value" id="dispAction"></p>
+        </div>
+      </div>
+      <p class="challenge-label">任務結算 · 點擊挑戰卡翻牌完成</p>
+      <div class="challenge-row">
+        <div class="challenge-card" id="challengeAction" role="button" tabindex="0">
+          <input type="checkbox" id="checkAction" />
+          <div class="ch-inner">
+            <div class="ch-face ch-front">完成「終極行動」？</div>
+            <div class="ch-face ch-back">✓ 完成</div>
+          </div>
+        </div>
+        <div class="challenge-card" id="challengeAvoid" role="button" tabindex="0">
+          <input type="checkbox" id="checkAvoid" />
+          <div class="ch-inner">
+            <div class="ch-face ch-front">守住「今日禁域」？</div>
+            <div class="ch-face ch-back">✓ 守住</div>
+          </div>
+        </div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">0/2</span>
+      </div>
+      <p class="clear-badge" id="clearBadge">今日通關 ✓</p>
+    </section>
+
+    <section class="empty-state" id="emptyState">
+      抽三張任務卡、翻牌填寫後按下「鎖定任務」，這裡就會出現今日簡報與兩張挑戰卡。
+    </section>
+
+    <section class="equipment-section" id="equipmentSection">
+      <div class="equipment-toggle" id="equipmentToggle">
+        <span>⚔️ 2026 裝備</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="equipment-grid">
+        <div class="equipment-card skill">
+          <p class="card-name">2026 修煉終生級技能卡</p>
+          <label for="skillCard">今年要練成的終生受用技能（一句話）</label>
+          <input type="text" id="skillCard" placeholder="例如：每日覆盤、深度閱讀、靜心十分鐘" />
+        </div>
+        <div class="equipment-card talisman">
+          <p class="card-name">2026 護身符</p>
+          <label for="talisman">守護你的一句話或原則</label>
+          <input type="text" id="talisman" placeholder="例如：慢就是快、先睡再說、不比較" />
+        </div>
+        <div class="equipment-card trigger">
+          <p class="card-name">被動技能觸發詞</p>
+          <label for="triggerWords">一說出口就觸發的動作（詞→行動）</label>
+          <textarea id="triggerWords" placeholder="例如：深呼吸→做三次深呼吸&#10;等一下→先數到三再回話" rows="2"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="history-section">
+      <div class="history-toggle" id="historyToggle">
+        <span>📜</span>
+        <span>歷史記錄</span>
+        <span id="historyArrow">▼</span>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "todayFocusGame";
+    const HISTORY_KEY = "yousuo_history";
+    const EQUIPMENT_KEY = "yousuo_equipment_2026";
+    const today = () => new Date().toISOString().slice(0, 10);
+
+    var dailyLines = [
+      "今天的地圖，由你畫。",
+      "主線只有一條，其餘都是支線。",
+      "禁域之外，才是你的領土。",
+      "一個小行動，就是一格進度。",
+      "游索的盡頭，是更好的自己。",
+      "先鎖定任務，再出發。",
+      "今日通關的密碼：一個焦點，一個行動。",
+      "護身符在心裡，禁域在腳下。",
+      "技能卡不用多，終生級一張就夠。",
+      "觸發詞一出口，被動就發動。",
+      "每天翻三張卡，一年後你就是另一個人。",
+      "禁域守住了，今天就算贏。",
+    ];
+    function pickDailyLine() {
+      var date = new Date();
+      var seed = date.getFullYear() * 10000 + date.getMonth() * 100 + date.getDate();
+      var idx = seed % dailyLines.length;
+      return dailyLines[idx];
+    }
+    function parseTriggerPhrases(text) {
+      if (!text || !text.trim()) return [];
+      var lines = text.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+      var out = [];
+      for (var i = 0; i < lines.length; i++) {
+        var arrow = lines[i].indexOf("→");
+        if (arrow === -1) arrow = lines[i].indexOf("->");
+        if (arrow === -1) continue;
+        var word = lines[i].slice(0, arrow).trim();
+        var action = lines[i].slice(arrow + (lines[i][arrow] === ">" ? 2 : 1)).trim();
+        if (word && action) out.push({ word: word, action: action });
+      }
+      return out;
+    }
+    function pickDailyTrigger(phrases) {
+      if (!phrases.length) return null;
+      var date = new Date();
+      var seed = date.getFullYear() * 10000 + date.getMonth() * 100 + date.getDate();
+      var idx = seed % phrases.length;
+      return phrases[idx];
+    }
+    function updateDailyTrigger() {
+      var eq = loadEquipment();
+      var phrases = parseTriggerPhrases(eq.triggerWords);
+      var one = pickDailyTrigger(phrases);
+      var box = document.getElementById("dailyTrigger");
+      if (!one) {
+        box.hidden = true;
+        return;
+      }
+      box.hidden = false;
+      document.getElementById("triggerWord").textContent = one.word;
+      document.getElementById("triggerAction").textContent = one.action;
+    }
+    function getStreak() {
+      var history = loadHistory();
+      var cleared = history.filter(function (h) { return h.checkAction && h.checkAvoid; });
+      if (!cleared.length) return 0;
+      cleared.sort(function (a, b) { return b.date.localeCompare(a.date); });
+      var expect = today();
+      var run = 0;
+      for (var i = 0; i < cleared.length; i++) {
+        if (cleared[i].date !== expect) break;
+        run++;
+        var d = new Date(expect);
+        d.setDate(d.getDate() - 1);
+        expect = d.toISOString().slice(0, 10);
+      }
+      return run;
+    }
+    function updateStreak() {
+      var s = getStreak();
+      var el = document.getElementById("streakLine");
+      if (s > 0) {
+        el.textContent = "🔥 連續 " + s + " 天今日通關";
+        el.innerHTML = "🔥 連續 <span>" + s + "</span> 天今日通關";
+      } else {
+        el.textContent = "";
+      }
+    }
+
+    // 音效生成器
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playFlipSound() {
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.15);
+    }
+    function playCompleteSound() {
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.frequency.setValueAtTime(523, audioCtx.currentTime);
+      oscillator.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.3);
+    }
+
+    function load() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      try {
+        const data = JSON.parse(raw);
+        return data.date === today() ? data : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function loadEquipment() {
+      var raw = localStorage.getItem(EQUIPMENT_KEY);
+      if (!raw) return { skillCard: "", talisman: "", triggerWords: "" };
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return { skillCard: "", talisman: "", triggerWords: "" };
+      }
+    }
+    function saveEquipment() {
+      var data = {
+        skillCard: document.getElementById("skillCard").value.trim(),
+        talisman: document.getElementById("talisman").value.trim(),
+        triggerWords: document.getElementById("triggerWords").value.trim(),
+      };
+      localStorage.setItem(EQUIPMENT_KEY, JSON.stringify(data));
+    }
+
+    function loadHistory() {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (!raw) return [];
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveToHistory(data) {
+      const history = loadHistory();
+      const existingIndex = history.findIndex(h => h.date === data.date);
+      if (existingIndex >= 0) {
+        history[existingIndex] = data;
+      } else {
+        history.unshift(data);
+      }
+      history.sort((a, b) => b.date.localeCompare(a.date));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 30)));
+    }
+
+    function save() {
+      const focus = document.getElementById("focus").value.trim();
+      const avoid = document.getElementById("avoid").value.trim();
+      const action = document.getElementById("action").value.trim();
+      if (!focus && !avoid && !action) {
+        alert("至少填一張卡吧～");
+        return;
+      }
+      const payload = {
+        date: today(),
+        focus: focus || "",
+        avoid: avoid || "",
+        action: action || "",
+        checkAction: false,
+        checkAvoid: false,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      saveToHistory(payload);
+      renderSummary(payload);
+      document.getElementById("summarySection").hidden = false;
+      document.getElementById("summaryLabel").hidden = false;
+      document.getElementById("emptyState").hidden = true;
+      updateHistory();
+      updateStreak();
+    }
+
+    function updateProgress(checkAction, checkAvoid) {
+      const n = (checkAction ? 1 : 0) + (checkAvoid ? 1 : 0);
+      const bar = document.getElementById("progressBar");
+      const text = document.getElementById("progressText");
+      const badge = document.getElementById("clearBadge");
+      bar.classList.remove("half", "full");
+      if (n === 1) bar.classList.add("half");
+      if (n === 2) bar.classList.add("full");
+      text.textContent = n + "/2";
+      text.classList.toggle("done", n === 2);
+      badge.classList.toggle("show", n === 2);
+    }
+
+    function renderSummary(data) {
+      document.getElementById("summaryDate").textContent = "日期：" + data.date;
+      const dispFocus = document.getElementById("dispFocus");
+      const dispAvoid = document.getElementById("dispAvoid");
+      const dispAction = document.getElementById("dispAction");
+      dispFocus.textContent = data.focus || "—";
+      dispAvoid.textContent = data.avoid || "—";
+      dispAction.textContent = data.action || "—";
+      dispFocus.classList.toggle("empty", !data.focus);
+      dispAvoid.classList.toggle("empty", !data.avoid);
+      dispAction.classList.toggle("empty", !data.action);
+
+      const checkAction = document.getElementById("checkAction");
+      const checkAvoid = document.getElementById("checkAvoid");
+      checkAction.checked = data.checkAction;
+      checkAvoid.checked = data.checkAvoid;
+      document.getElementById("challengeAction").classList.toggle("done", data.checkAction);
+      document.getElementById("challengeAvoid").classList.toggle("done", data.checkAvoid);
+      updateProgress(data.checkAction, data.checkAvoid);
+    }
+
+    function persistCheck(field, value) {
+      const data = load();
+      if (!data) return;
+      data[field] = value;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      saveToHistory(data);
+      renderSummary(data);
+      updateStreak();
+    }
+
+    function updateHistory() {
+      const history = loadHistory();
+      const list = document.getElementById("historyList");
+      if (history.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:0.85rem;padding:1rem;">尚無歷史記錄</div>';
+        return;
+      }
+      list.innerHTML = history.map(item => {
+        const date = new Date(item.date);
+        const dateStr = date.toLocaleDateString("zh-TW", { month: "short", day: "numeric" });
+        const completed = (item.checkAction ? 1 : 0) + (item.checkAvoid ? 1 : 0);
+        return `
+          <div class="history-item">
+            <div class="date">${dateStr}</div>
+            <div class="content">
+              <strong>主線：</strong>${item.focus || "—"} | 
+              <strong>禁域：</strong>${item.avoid || "—"} | 
+              <strong>行動：</strong>${item.action || "—"}
+            </div>
+            <div class="stats">
+              <span class="stat ${completed === 2 ? "done" : ""}">完成度 ${completed}/2</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // 任務卡：點擊翻牌，填寫後自動翻回
+    document.querySelectorAll(".game-card").forEach(function (card) {
+      const input = card.querySelector("input, textarea");
+      const front = card.querySelector(".card-front");
+      
+      card.addEventListener("click", function (e) {
+        if (e.target.closest(".card-back input") || e.target.closest(".card-back textarea")) return;
+        if (!this.classList.contains("flipped")) {
+          playFlipSound();
+        }
+        this.classList.toggle("flipped");
+      });
+
+      // 輸入框失去焦點時，如果有內容則自動翻回並更新正面預覽
+      input.addEventListener("blur", function () {
+        const value = this.value.trim();
+        if (value) {
+          setTimeout(() => {
+            card.classList.remove("flipped");
+            const preview = front.querySelector(".card-preview") || document.createElement("div");
+            if (!preview.classList.contains("card-preview")) {
+              preview.className = "card-preview";
+              front.appendChild(preview);
+            }
+            preview.textContent = value;
+            playFlipSound();
+          }, 150);
+        }
+      });
+
+      // 輸入時更新預覽
+      input.addEventListener("input", function () {
+        const preview = front.querySelector(".card-preview");
+        if (preview) {
+          preview.textContent = this.value.trim() || "";
+        }
+      });
+    });
+
+    document.getElementById("saveBtn").addEventListener("click", save);
+
+    function toggleChallenge(id, checkboxId) {
+      const el = document.getElementById(id);
+      const check = document.getElementById(checkboxId);
+      check.checked = !check.checked;
+      el.classList.toggle("done", check.checked);
+      if (check.checked) playFlipSound();
+      persistCheck(checkboxId === "checkAction" ? "checkAction" : "checkAvoid", check.checked);
+      const allDone = document.getElementById("checkAction").checked && document.getElementById("checkAvoid").checked;
+      if (allDone) {
+        setTimeout(() => playCompleteSound(), 300);
+      }
+      updateProgress(document.getElementById("checkAction").checked, document.getElementById("checkAvoid").checked);
+    }
+    document.getElementById("challengeAction").addEventListener("click", function () { toggleChallenge("challengeAction", "checkAction"); });
+    document.getElementById("challengeAvoid").addEventListener("click", function () { toggleChallenge("challengeAvoid", "checkAvoid"); });
+    document.getElementById("challengeAction").addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleChallenge("challengeAction", "checkAction"); } });
+    document.getElementById("challengeAvoid").addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleChallenge("challengeAvoid", "checkAvoid"); } });
+
+    document.getElementById("dailyLine").textContent = pickDailyLine();
+    updateDailyTrigger();
+
+    document.getElementById("equipmentToggle").addEventListener("click", function () {
+      document.getElementById("equipmentSection").classList.toggle("open");
+    });
+    ["skillCard", "talisman", "triggerWords"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener("blur", function () { saveEquipment(); updateDailyTrigger(); });
+    });
+
+    var eq = loadEquipment();
+    if (eq.skillCard) document.getElementById("skillCard").value = eq.skillCard;
+    if (eq.talisman) document.getElementById("talisman").value = eq.talisman;
+    if (eq.triggerWords) document.getElementById("triggerWords").value = eq.triggerWords;
+
+    // 歷史記錄切換
+    document.getElementById("historyToggle").addEventListener("click", function () {
+      const list = document.getElementById("historyList");
+      const arrow = document.getElementById("historyArrow");
+      list.classList.toggle("show");
+      arrow.textContent = list.classList.contains("show") ? "▲" : "▼";
+    });
+
+    const existing = load();
+    if (existing) {
+      document.getElementById("focus").value = existing.focus;
+      document.getElementById("avoid").value = existing.avoid;
+      document.getElementById("action").value = existing.action;
+      // 更新正面預覽
+      if (existing.focus) {
+        const preview = document.querySelector("#cardFocus .card-front .card-preview") || document.createElement("div");
+        if (!preview.classList.contains("card-preview")) {
+          preview.className = "card-preview";
+          document.querySelector("#cardFocus .card-front").appendChild(preview);
+        }
+        preview.textContent = existing.focus;
+      }
+      if (existing.avoid) {
+        const preview = document.querySelector("#cardAvoid .card-front .card-preview") || document.createElement("div");
+        if (!preview.classList.contains("card-preview")) {
+          preview.className = "card-preview";
+          document.querySelector("#cardAvoid .card-front").appendChild(preview);
+        }
+        preview.textContent = existing.avoid;
+      }
+      if (existing.action) {
+        const preview = document.querySelector("#cardAction .card-front .card-preview") || document.createElement("div");
+        if (!preview.classList.contains("card-preview")) {
+          preview.className = "card-preview";
+          document.querySelector("#cardAction .card-front").appendChild(preview);
+        }
+        preview.textContent = existing.action;
+      }
+      renderSummary(existing);
+      document.getElementById("summarySection").hidden = false;
+      document.getElementById("summaryLabel").hidden = false;
+      document.getElementById("emptyState").hidden = true;
+    }
+    updateHistory();
+    updateStreak();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    }
+    var installPrompt = null;
+    var installBtn = document.getElementById("installBtn");
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      installPrompt = e;
+      installBtn.classList.add("show");
+    });
+    installBtn.addEventListener("click", function () {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      installPrompt.userChoice.then(function (r) {
+        installPrompt = null;
+        installBtn.classList.remove("show");
+      });
+    });
+    window.addEventListener("appinstalled", function () {
+      installPrompt = null;
+      installBtn.classList.remove("show");
+    });
+  </script>
+</body>
+</html>
